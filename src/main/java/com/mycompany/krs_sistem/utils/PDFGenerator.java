@@ -63,19 +63,15 @@ public class PDFGenerator {
      */
     public static boolean generateRekapKRSBimbingan(String nipDosen, String namaDosen, String filePath) {
         try (Connection conn = connection.koneksi()) {
-            // Load jrxml dari resources
             java.io.InputStream jrxmlStream = PDFGenerator.class.getResourceAsStream("/reports/rekap_krs_bimbingan.jrxml");
             net.sf.jasperreports.engine.JasperReport jasperReport = net.sf.jasperreports.engine.JasperCompileManager.compileReport(jrxmlStream);
             
-            // Set parameter
             java.util.Map<String, Object> params = new java.util.HashMap<>();
             params.put("NIP_DOSEN", nipDosen);
             params.put("NAMA_DOSEN", namaDosen);
             
-            // Fill report dengan koneksi JDBC
             net.sf.jasperreports.engine.JasperPrint jasperPrint = net.sf.jasperreports.engine.JasperFillManager.fillReport(jasperReport, params, conn);
             
-            // Export ke PDF
             net.sf.jasperreports.engine.JasperExportManager.exportReportToPdfFile(jasperPrint, filePath);
             
             return true;
@@ -90,15 +86,12 @@ public class PDFGenerator {
      */
     public static boolean generateRekapKRSAll(String filePath) {
         try (Connection conn = connection.koneksi()) {
-            // Load jrxml dari resources
             java.io.InputStream jrxmlStream = PDFGenerator.class.getResourceAsStream("/reports/rekap_krs_all.jrxml");
             net.sf.jasperreports.engine.JasperReport jasperReport = net.sf.jasperreports.engine.JasperCompileManager.compileReport(jrxmlStream);
             
-            // Fill report dengan koneksi JDBC (tanpa parameter tambahan)
             java.util.Map<String, Object> params = new java.util.HashMap<>();
             net.sf.jasperreports.engine.JasperPrint jasperPrint = net.sf.jasperreports.engine.JasperFillManager.fillReport(jasperReport, params, conn);
             
-            // Export ke PDF
             net.sf.jasperreports.engine.JasperExportManager.exportReportToPdfFile(jasperPrint, filePath);
             
             return true;

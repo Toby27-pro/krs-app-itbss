@@ -129,7 +129,7 @@ public class CetakKRSAdmin extends JFrame {
         tableContainer.setBackground(Color.WHITE);
         tableContainer.setLayout(new BorderLayout());
 
-        String[] columns = {"NIM", "Nama Mahasiswa", "Prodi", "Tahun Ajaran", "Semester", "Total SKS", "Status", "Tanggal KRS"};
+        String[] columns = {"NIM", "Nama Mahasiswa", "Prodi", "Dosen PA", "Tahun Ajaran", "Semester", "Total SKS", "Status", "Tanggal KRS"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -153,13 +153,14 @@ public class CetakKRSAdmin extends JFrame {
         header.setPreferredSize(new Dimension(100, 30));
 
         krsTable.getColumnModel().getColumn(0).setPreferredWidth(80);
-        krsTable.getColumnModel().getColumn(1).setPreferredWidth(160);
-        krsTable.getColumnModel().getColumn(2).setPreferredWidth(120);
-        krsTable.getColumnModel().getColumn(3).setPreferredWidth(100);
-        krsTable.getColumnModel().getColumn(4).setPreferredWidth(70);
-        krsTable.getColumnModel().getColumn(5).setPreferredWidth(70);
-        krsTable.getColumnModel().getColumn(6).setPreferredWidth(80);
-        krsTable.getColumnModel().getColumn(7).setPreferredWidth(100);
+        krsTable.getColumnModel().getColumn(1).setPreferredWidth(150);
+        krsTable.getColumnModel().getColumn(2).setPreferredWidth(110);
+        krsTable.getColumnModel().getColumn(3).setPreferredWidth(140);
+        krsTable.getColumnModel().getColumn(4).setPreferredWidth(90);
+        krsTable.getColumnModel().getColumn(5).setPreferredWidth(65);
+        krsTable.getColumnModel().getColumn(6).setPreferredWidth(65);
+        krsTable.getColumnModel().getColumn(7).setPreferredWidth(80);
+        krsTable.getColumnModel().getColumn(8).setPreferredWidth(100);
 
         JScrollPane scrollTable = new JScrollPane(krsTable);
         scrollTable.setBorder(null);
@@ -181,17 +182,18 @@ public class CetakKRSAdmin extends JFrame {
 
     private void loadData() {
         tableModel.setRowCount(0);
-        String sql = "SELECT k.krs_id, k.nim, m.nama_lengkap, p.nama_prodi, ta.tahun_ajaran, ta.semester, k.tanggal_krs, k.status, " +
+        String sql = "SELECT k.krs_id, k.nim, m.nama_lengkap, p.nama_prodi, d.nama_lengkap AS nama_dosen_pa, ta.tahun_ajaran, ta.semester, k.tanggal_krs, k.status, " +
                      "COALESCE(SUM(CASE WHEN kd.status != 'Rejected' THEN mk.sks ELSE 0 END), 0) as total_sks " +
                      "FROM krs k " +
                      "JOIN mahasiswa m ON k.nim = m.nim " +
                      "LEFT JOIN prodi p ON m.prodi_id = p.prodi_id " +
+                     "LEFT JOIN dosen d ON m.dosen_pa = d.nip " +
                      "LEFT JOIN tahun_akademik ta ON k.tahun_id = ta.tahun_id " +
                      "LEFT JOIN krs_detail kd ON k.krs_id = kd.krs_id " +
                      "LEFT JOIN jadwal j ON kd.jadwal_id = j.jadwal_id " +
                      "LEFT JOIN kelas kl ON j.kelas_id = kl.kelas_id " +
                      "LEFT JOIN mata_kuliah mk ON kl.mk_id = mk.mk_id " +
-                     "GROUP BY k.krs_id, k.nim, m.nama_lengkap, p.nama_prodi, ta.tahun_ajaran, ta.semester, k.tanggal_krs, k.status " +
+                     "GROUP BY k.krs_id, k.nim, m.nama_lengkap, p.nama_prodi, d.nama_lengkap, ta.tahun_ajaran, ta.semester, k.tanggal_krs, k.status " +
                      "ORDER BY m.nim, k.krs_id";
 
         try (Connection conn = connection.koneksi();
@@ -203,6 +205,7 @@ public class CetakKRSAdmin extends JFrame {
                     rs.getString("nim"),
                     rs.getString("nama_lengkap"),
                     rs.getString("nama_prodi") != null ? rs.getString("nama_prodi") : "-",
+                    rs.getString("nama_dosen_pa") != null && !rs.getString("nama_dosen_pa").trim().isEmpty() ? rs.getString("nama_dosen_pa") : "-",
                     rs.getString("tahun_ajaran") != null ? rs.getString("tahun_ajaran") : "-",
                     rs.getString("semester") != null ? rs.getString("semester") : "-",
                     rs.getInt("total_sks"),
@@ -212,7 +215,7 @@ public class CetakKRSAdmin extends JFrame {
             }
 
             if (tableModel.getRowCount() == 0) {
-                tableModel.addRow(new Object[]{"-", "Tidak ada data KRS", "-", "-", "-", "-", "-", "-"});
+                tableModel.addRow(new Object[]{"-", "Tidak ada data KRS", "-", "-", "-", "-", "-", "-", "-"});
             }
 
         } catch (SQLException e) {
