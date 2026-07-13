@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="rekap_krs_bimbingan"
+              pageWidth="595" pageHeight="842" orientation="Portrait"
+              columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20">
+
+    <parameter name="NIP_DOSEN" class="java.lang.String"/>
+    <parameter name="NAMA_DOSEN" class="java.lang.String"/>
+
+    <queryString>
+        <![CDATA[
+        SELECT k.krs_id, k.nim, m.nama_lengkap, 
+               IFNULL(p.nama_prodi, '-') AS nama_prodi,
+               IFNULL(ta.tahun_ajaran, '-') AS tahun_ajaran, 
+               IFNULL(ta.semester, '-') AS semester, 
+               IFNULL(k.tanggal_krs, '-') AS tanggal_krs, 
+               k.status,
+               IFNULL(mk.kode_mk, '-') AS kode_mk,
+               IFNULL(mk.nama_mk, 'Tidak ada matkul disetujui') AS nama_mk,
+               IFNULL(mk.sks, 0) AS sks,
+               (SELECT COALESCE(SUM(mk2.sks), 0) 
+                FROM krs_detail kd2 
+                JOIN jadwal j2 ON kd2.jadwal_id = j2.jadwal_id 
+                JOIN kelas kl2 ON j2.kelas_id = kl2.kelas_id 
+                JOIN mata_kuliah mk2 ON kl2.mk_id = mk2.mk_id 
+                WHERE kd2.krs_id = k.krs_id AND kd2.status = 'Approved') AS total_sks
+        FROM krs k
+        JOIN mahasiswa m ON k.nim = m.nim
+        LEFT JOIN prodi p ON m.prodi_id = p.prodi_id
+        LEFT JOIN tahun_akademik ta ON k.tahun_id = ta.tahun_id
+        LEFT JOIN krs_detail kd ON k.krs_id = kd.krs_id AND kd.status = 'Approved'
+        LEFT JOIN jadwal j ON kd.jadwal_id = j.jadwal_id
+        LEFT JOIN kelas kl ON j.kelas_id = kl.kelas_id
+        LEFT JOIN mata_kuliah mk ON kl.mk_id = mk.mk_id
+        WHERE m.dosen_pa = $P{NIP_DOSEN}
+        ORDER BY m.nim, k.krs_id, mk.kode_mk
+        ]]>
+    </queryString>
+
+    <field name="nim" class="java.lang.String"/>
+    <field name="nama_lengkap" class="java.lang.String"/>
+    <field name="nama_prodi" class="java.lang.String"/>
+    <field name="tahun_ajaran" class="java.lang.String"/>
+    <field name="semester" class="java.lang.String"/>
+    <field name="total_sks" class="java.lang.Long"/>
+    <field name="status" class="java.lang.String"/>
+    <field name="tanggal_krs" class="java.lang.String"/>
+    <field name="kode_mk" class="java.lang.String"/>
+    <field name="nama_mk" class="java.lang.String"/>
+    <field name="sks" class="java.lang.Integer"/>
+
+    <variable name="ROW_NUM" class="java.lang.Integer" resetType="Group" resetGroup="MahasiswaGroup" calculation="Count">
+        <variableExpression><![CDATA[Boolean.TRUE]]></variableExpression>
+    </variable>
+
+    <group name="MahasiswaGroup">
+        <groupExpression><![CDATA[$F{nim}]]></groupExpression>
+        <groupHeader>
+            <band height="95">
+                <!-- Data Mahasiswa Kolom 1 -->
+                <staticText>
+                    <reportElement x="0" y="10" width="80" height="15"/>
+                    <textElement><font isBold="true"/></textElement>
+                    <text><![CDATA[NIM]]></text>
+                </staticText>
+                <staticText>
+                    <reportElement x="80" y="10" width="10" height="15"/>
+                    <textElement><font isBold="true"/></textElement>
+                    <text><![CDATA[:]]></text>
+                </staticText>
+                <textField>
+                    <reportElement x="90" y="10" width="200" height="15"/>
+                    <textFieldExpression><![CDATA[$F{nim}]]></textFieldExpression>
+                </textField>
+                
+                <staticText>
+                    <reportElement x="0" y="25" width="80" height="15"/>
+                    <textElement><font isBold="true"/></textElement>
+                    <text><![CDATA[Nama]]></text>
+                </staticText>
+                <staticText>
+                    <reportElement x="80" y="25" width="10" height="15"/>
+                    <textElement><font isBold="true"/></textElement>
+                    <text><![CDATA[:]]></text>
+                </staticText>
+                <textField>
+                    <reportElement x="90" y="25" width="200" height="15"/>
+                    <textFieldExpression><![CDATA[$F{nama_lengkap}]]></textFieldExpression>
+                </textField>
+                
+                <staticText>
+                    <reportElement x="0" y="40" width="80" height="15"/>
+                    <textElement><font isBold="true"/></textElement>
+                    <text><![CDATA[Program Studi]]></text>
+                </staticText>
+                <staticText>
+                    <reportElement x="80" y="40" width="10" height="15"/>
+                    <textElement><font isBold="true"/></textElement>
+                    <text><![CDATA[:]]></text>
+                </staticText>
+                <textField>
+                    <reportElement x="90" y="40" width="200" height="15"/>
+                    <textFieldExpression><![CDATA[$F{nama_prodi}]]></textFieldExpression>
+                </textField>
+
+                <!-- Header Tabel Mata Kuliah -->
+                <staticText>
+                    <reportElement mode="Opaque" x="0" y="70" width="35" height="25" backcolor="#C0C0C0"/>
+                    <box><pen lineWidth="0.5"/></box>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                    <text><![CDATA[No]]></text>
+                </staticText>
+                <staticText>
+                    <reportElement mode="Opaque" x="35" y="70" width="80" height="25" backcolor="#C0C0C0"/>
+                    <box><pen lineWidth="0.5"/></box>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                    <text><![CDATA[Kode MK]]></text>
+                </staticText>
+                <staticText>
+                    <reportElement mode="Opaque" x="115" y="70" width="380" height="25" backcolor="#C0C0C0"/>
+                    <box><pen lineWidth="0.5"/></box>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                    <text><![CDATA[Nama Mata Kuliah]]></text>
+                </staticText>
+                <staticText>
+                    <reportElement mode="Opaque" x="495" y="70" width="60" height="25" backcolor="#C0C0C0"/>
+                    <box><pen lineWidth="0.5"/></box>
+                    <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10" isBold="true"/></textElement>
+                    <text><![CDATA[SKS]]></text>
+                </staticText>
+            </band>
+        </groupHeader>
+        <groupFooter>
+            <band height="40">
+                <staticText>
+                    <reportElement x="0" y="0" width="495" height="20"/>
+                    <box rightPadding="5"><pen lineWidth="0.5"/></box>
+                    <textElement textAlignment="Right" verticalAlignment="Middle">
+                        <font size="10" isBold="true"/>
+                    </textElement>
+                    <text><![CDATA[Total SKS Disetujui:]]></text>
+                </staticText>
+                <textField>
+                    <reportElement x="495" y="0" width="60" height="20"/>
+                    <box><pen lineWidth="0.5"/></box>
+                    <textElement textAlignment="Center" verticalAlignment="Middle">
+                        <font size="10" isBold="true"/>
+                    </textElement>
+                    <textFieldExpression><![CDATA[$F{total_sks}]]></textFieldExpression>
+                </textField>
+            </band>
+        </groupFooter>
+    </group>
+
+    <title>
+        <band height="95">
+            <staticText>
+                <reportElement x="0" y="0" width="555" height="25"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="14" isBold="true"/>
+                </textElement>
+                <text><![CDATA[REKAP KRS MAHASISWA BIMBINGAN]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="0" y="25" width="555" height="20"/>
+                <textElement textAlignment="Center" verticalAlignment="Middle">
+                    <font size="12" isBold="false"/>
+                </textElement>
+                <textFieldExpression><![CDATA["Tahun Akademik: " + $F{tahun_ajaran} + " / Semester " + $F{semester}]]></textFieldExpression>
+            </textField>
+            <line>
+                <reportElement x="0" y="55" width="555" height="1"/>
+                <graphicElement>
+                    <pen lineWidth="2.0"/>
+                </graphicElement>
+            </line>
+            <staticText>
+                <reportElement x="0" y="65" width="80" height="15"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[NIP Dosen]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="80" y="65" width="10" height="15"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="90" y="65" width="300" height="15"/>
+                <textElement><font size="10"/></textElement>
+                <textFieldExpression><![CDATA[$P{NIP_DOSEN}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="0" y="80" width="80" height="15"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[Nama Dosen]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="80" y="80" width="10" height="15"/>
+                <textElement><font size="10" isBold="true"/></textElement>
+                <text><![CDATA[:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="90" y="80" width="300" height="15"/>
+                <textElement><font size="10"/></textElement>
+                <textFieldExpression><![CDATA[$P{NAMA_DOSEN}]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <detail>
+        <band height="20">
+            <textField>
+                <reportElement x="0" y="0" width="35" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10"/></textElement>
+                <textFieldExpression><![CDATA[$V{ROW_NUM}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="35" y="0" width="80" height="20"/>
+                <box leftPadding="4"><pen lineWidth="0.5"/></box>
+                <textElement verticalAlignment="Middle"><font size="10"/></textElement>
+                <textFieldExpression><![CDATA[$F{kode_mk}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="115" y="0" width="380" height="20"/>
+                <box leftPadding="4"><pen lineWidth="0.5"/></box>
+                <textElement verticalAlignment="Middle"><font size="10"/></textElement>
+                <textFieldExpression><![CDATA[$F{nama_mk}]]></textFieldExpression>
+            </textField>
+            <textField>
+                <reportElement x="495" y="0" width="60" height="20"/>
+                <box><pen lineWidth="0.5"/></box>
+                <textElement textAlignment="Center" verticalAlignment="Middle"><font size="10"/></textElement>
+                <textFieldExpression><![CDATA[$F{sks}]]></textFieldExpression>
+            </textField>
+        </band>
+    </detail>
+
+    <pageFooter>
+        <band height="25">
+            <textField>
+                <reportElement x="443" y="0" width="112" height="20"/>
+                <textElement textAlignment="Right" verticalAlignment="Middle"><font size="8"/></textElement>
+                <textFieldExpression><![CDATA["Halaman " + $V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+        </band>
+    </pageFooter>
+
+</jasperReport>
